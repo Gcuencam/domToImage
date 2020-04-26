@@ -18,8 +18,8 @@ const createCanvas = (width: number, height: number) => {
 }
 
 const drawInCanvas = (canvas: HTMLCanvasElement, image: HTMLImageElement, x: number, y: number, w: number, h: number) => {
-  const ctx = canvas.getContext('2d')
-  ctx.drawImage(image, x, y, w, h, 0, 0, w, h)
+  const ctx: CanvasRenderingContext2D | null = canvas.getContext('2d')
+  ctx && ctx.drawImage(image, x, y, w, h, 0, 0, w, h)
 }
 
 const createLink = (canvas: HTMLCanvasElement, name: string) => {
@@ -29,8 +29,9 @@ const createLink = (canvas: HTMLCanvasElement, name: string) => {
   return link
 }
 
-const domToImage = (node: HTMLElement) => {
+const domToImage = (node: HTMLElement, fileName: string) => {
   const html = document.querySelector('html')
+  if (!html) return false
   const htmlClone = html.cloneNode(true)
   const htmlWidth = html.offsetWidth
   const htmlHeight = html.offsetHeight
@@ -43,7 +44,7 @@ const domToImage = (node: HTMLElement) => {
   image.onload = () => {
     const canvas = createCanvas(nodeWidth, nodeHeight)
     drawInCanvas(canvas, image, rect.x, rect.y, nodeWidth, nodeHeight)
-    const link = createLink(canvas, 'enagas.png')
+    const link = createLink(canvas, fileName)
     link.click()
   }
   image.src = 'data:image/svg+xml; charset=utf8, ' + encodeURIComponent(data)
