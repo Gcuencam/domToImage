@@ -1,53 +1,71 @@
-const createSvg = (width: number, height: number, nodeContent: Node) => {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
-  svg.setAttribute('width', width.toString())
-  svg.setAttribute('height', height.toString())
-  const foreignObject = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject')
-  foreignObject.setAttribute('width', width.toString())
-  foreignObject.setAttribute('height', height.toString())
-  foreignObject.appendChild(nodeContent)
-  svg.appendChild(foreignObject)
-  return svg
+const width = (node: HTMLElement): number => node.offsetWidth
+const height = (node: HTMLElement): number => node.offsetHeight
+
+const cloneHTML = () => {
+  const node = document.querySelector('html')
+  return node && node.cloneNode(true)
 }
 
-const createCanvas = (width: number, height: number) => {
+const createForeignObject = () => {
+  const foreignObject = document.createElementNS('http://www.w3.org/2000/svg', 'foreignObject')
+  foreignObject.setAttribute('width', '100%')
+  foreignObject.setAttribute('height', '100%')
+  return foreignObject
+}
+
+const createCanvas = (node: HTMLElement, image: HTMLImageElement) => {
   const canvas = document.createElement('canvas')
-  canvas.width = width
-  canvas.height = height
+  canvas.width = width(node)
+  canvas.height = height(node)
+  const ctx: CanvasRenderingContext2D | null = canvas.getContext('2d')
+  ctx && ctx.drawImage(image, 0, 0)
   return canvas
 }
 
-const drawInCanvas = (canvas: HTMLCanvasElement, image: HTMLImageElement, x: number, y: number, w: number, h: number) => {
-  const ctx: CanvasRenderingContext2D | null = canvas.getContext('2d')
-  ctx && ctx.drawImage(image, x, y, w, h, 0, 0, w, h)
+const createImage = async (uri: string): Promise<HTMLImageElement> => {
+  return new Promise((resolve, reject) => {
+    const image = new Image()
+    image.onload = () => {
+      resolve(image)
+    }
+    image.onerror = reject
+    image.src = uri
+  })
 }
 
-const createLink = (canvas: HTMLCanvasElement, name: string) => {
+const createSvgURI = (node: HTMLElement): string => {
+  const _html: any = cloneHTML()
+  if (!node || !_html) return 'false'
+  _html.removeChild(_html.querySelector('body'))
+  const _node: any = node.cloneNode(true)
+  _node.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml')
+  _html.appendChild(_node)
+  const foreignObject = createForeignObject()
+  foreignObject.appendChild(_html)
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')
+  svg.setAttribute('width', width(node).toString())
+  svg.setAttribute('height', height(node).toString())
+  svg.appendChild(foreignObject)
+  return 'data:image/svg+xml; charset=utf8, ' + encodeURIComponent(new XMLSerializer().serializeToString(svg))
+}
+
+const createLink = (url: string, name: string) => {
   const link = document.createElement('a')
   link.download = name
-  link.href = canvas.toDataURL("image/jpg")
+  link.href = url
   return link
 }
 
-const domToImage = (node: HTMLElement, fileName: string) => {
-  const html = document.querySelector('html')
-  if (!html) return false
-  const htmlClone = html.cloneNode(true)
-  const htmlWidth = html.offsetWidth
-  const htmlHeight = html.offsetHeight
-  const nodeWidth = node.offsetWidth
-  const nodeHeight = node.offsetHeight
-  const rect = node.getBoundingClientRect()
-  const svg = createSvg(htmlWidth, htmlHeight, htmlClone)
-  const data = new XMLSerializer().serializeToString(svg)
-  const image = new Image()
-  image.onload = () => {
-    const canvas = createCanvas(nodeWidth, nodeHeight)
-    drawInCanvas(canvas, image, rect.x, rect.y, nodeWidth, nodeHeight)
-    const link = createLink(canvas, fileName)
+const domDownloader = async (node: HTMLElement, fileName: string) => {
+  const uri: string = createSvgURI(node)
+  try {
+    const image = await createImage(uri)
+    const canvas = createCanvas(node, image)
+    const link = createLink(canvas.toDataURL('image/jpeg', 1.0), fileName)
     link.click()
+  } catch (err) {
+    console.error(err)
   }
-  image.src = 'data:image/svg+xml; charset=utf8, ' + encodeURIComponent(data)
 }
 
-export default domToImage
+export default domDownloader
