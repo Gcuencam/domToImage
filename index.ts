@@ -36,11 +36,14 @@ const createImage = async (uri: string): Promise<HTMLImageElement> => {
   })
 }
 
-const createSvgURI = (node: HTMLElement): string => {
+const createSvgURI = (node: HTMLElement, options: Option): string => {
   const _html: any = cloneHTML()
   if (!node || !_html) return 'false'
   _html.removeChild(_html.querySelector('body'))
-  const _node: any = node.cloneNode(true)
+  let _node: any = node.cloneNode(true)
+  if (options.filter) {
+    _node = filterNode(_node, options.filter)
+  }
   _node.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml')
   _html.appendChild(_node)
   const foreignObject = createForeignObject()
@@ -65,10 +68,7 @@ const filterNode = (node: HTMLElement, selector: string): HTMLElement => {
 }
 
 const domDownloader = async (node: HTMLElement, fileName: string, options: Option) => {
-  if (options.filter) {
-    node = filterNode(node, options.filter)
-  }
-  const uri: string = createSvgURI(node)
+  const uri: string = createSvgURI(node, options)
   try {
     const image = await createImage(uri)
     const canvas = createCanvas(node, image)
