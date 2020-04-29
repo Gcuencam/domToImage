@@ -36,8 +36,23 @@ const createImage = async (uri: string): Promise<HTMLImageElement> => {
   })
 }
 
+const getCss = (item: any) => item.cssText
+
+const getStylesFromFile = (node: HTMLElement) => {
+  const stylesheet: any = document.querySelector('[rel="stylesheet"]')
+  if (stylesheet) {
+    const head = node.querySelector('head')
+    const cssContent = Array.prototype.map.call(stylesheet.sheet.cssRules, getCss).join('\n')
+    const style = document.createElement('style')
+    style.type = 'text/css'
+    style.appendChild(document.createTextNode(cssContent))
+    head?.appendChild(style)
+  }
+}
+
 const createSvgURI = (node: HTMLElement, options: Option): string => {
   const _html: any = cloneHTML()
+  getStylesFromFile(_html)
   if (!node || !_html) return 'false'
   _html.removeChild(_html.querySelector('body'))
   let _node: any = node.cloneNode(true)
