@@ -1,3 +1,6 @@
+type Options = "filter"
+type Option = { [option in Options]: string };
+
 const width = (node: HTMLElement): number => node.offsetWidth
 const height = (node: HTMLElement): number => node.offsetHeight
 
@@ -56,7 +59,15 @@ const createLink = (url: string, name: string) => {
   return link
 }
 
-const domDownloader = async (node: HTMLElement, fileName: string) => {
+const filterNode = (node: HTMLElement, selector: string): HTMLElement => {
+  node.querySelectorAll(selector).forEach(n => n.remove());
+  return node
+}
+
+const domDownloader = async (node: HTMLElement, fileName: string, options: Option) => {
+  if (options.filter) {
+    node = filterNode(node, options.filter)
+  }
   const uri: string = createSvgURI(node)
   try {
     const image = await createImage(uri)
