@@ -52,6 +52,7 @@ const getStylesFromFile = (node: HTMLElement) => {
 
 const createSvgURI = (node: HTMLElement, options: Option): string => {
   const _html: any = cloneHTML()
+  _html.classList.add('domtoimage')
   getStylesFromFile(_html)
   if (!node || !_html) return 'false'
   _html.removeChild(_html.querySelector('body'))
